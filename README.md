@@ -1,26 +1,25 @@
-# AuthMeReloaded
-**"The best authentication plugin for the Bukkit modding API!"**
+# AuthMeReloadedSHRIMPCRAFTVERSION
+**"The best authentication plugin for SHRIMCRAFT BY MP3"**
 
 <img src="wallpaper.png?raw=true" alt="AuthMeLogo"/>
 
 | Type              | Badges                                                                                                                                                                                                                                                                                                                                                                                |
 |-------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Code quality:** | [![Code Climate](https://codeclimate.com/github/AuthMe/AuthMeReloaded/badges/gpa.svg)](https://codeclimate.com/github/AuthMe/AuthMeReloaded) [![Coverage status](https://coveralls.io/repos/AuthMe-Team/AuthMeReloaded/badge.svg?branch=master&service=github)](https://coveralls.io/github/AuthMe-Team/AuthMeReloaded?branch=master)                                                 |
-| **Jenkins CI:**   | [![Jenkins Status](https://img.shields.io/website-up-down-green-red/http/shields.io.svg?label=ci.codemc.org)](https://ci.codemc.org/) [![Build Status](https://ci.codemc.org/buildStatus/icon?job=AuthMe/AuthMeReloaded)](https://ci.codemc.org/job/AuthMe/job/AuthMeReloaded) ![Build Tests](https://img.shields.io/jenkins/t/https/ci.codemc.org/job/AuthMe/job/AuthMeReloaded.svg) |
-| **Other CIs:**    | [![Build Status](https://www.travis-ci.com/AuthMe/AuthMeReloaded.svg?branch=master)](https://www.travis-ci.com/AuthMe/AuthMeReloaded)                                                                                                                                                                                                                                                             |
+| **Code quality:** | S++ the best [![Coverage status]100% better than any other plugin                                                 |
+| **Jenkins CI:**   | what [![Build Status]super stable amazing better cool ![Build Tests]none |
+| **Other CIs:**    | [![Build Status]100% working and aslo its shrimpcraft themed                                                                                                                                                                                                                                                             |
 
 ## Description
 
-Prevent username stealing on your server!<br>
-Use it to secure your Offline mode server or to increase your Online mode server's protection!
+prevent stealing usernames<br>
+use it to secure offline and even online mode thats kinda crazy
+authmereloadedshrimpcraft versions executes any players tryna hack ur server<br>
+also it can ban people from specific countires if ur racist but i know mp3 isnt racist so he wont do that
 
-AuthMeReloaded disallows players who aren't authenticated to do actions like placing blocks, moving,<br>
-typing commands or using the inventory. It can also kick players with uncommonly long or short player names or kick players from banned countries.
+with session login you can make it so ur lazy so u dont enter ur password every login i hope mp3 turns this feature on
+configuration file exists
 
-With the Session Login feature you don't have to execute the authentication command every time you connect to the server! 
-Each command and every feature can be enabled or disabled from our well structured configuration file.
-
-You can also create your own translation file and, if you want, you can share it with us! :)
+if u make a translationf ile pls share it with authme devs not me tho
 
 #### Features:
 <ul>
@@ -61,6 +60,7 @@ You can also create your own translation file and, if you want, you can share it
   <li>Available languages: <a href="https://github.com/AuthMe/AuthMeReloaded/blob/master/docs/translations.md">translations</a></li>
   <li>Built-in Deprecated FlatFile (auths.db) to SQL (authme.sql) converter!</li>
   <li><strong>Import your old database from other plugins like Rakamak, xAuth, CrazyLogin, RoyalAuth and vAuth!</strong></li>
+  <li><strong>milady</strong></li>
 </ul>
 
 #### Configuration
@@ -129,6 +129,9 @@ You can also create your own translation file and, if you want, you can share it
 >- ProtocolLib (optional, required by some features)
 
 ## Credits
+
+#### the guy who did all the work
+### thepoiedit
 
 ##### Contributors:
 Team members: <a href="https://github.com/AuthMe/AuthMeReloaded/wiki/Development-team">developers</a>, <a href="https://github.com/AuthMe/AuthMeReloaded/wiki/Translators">translators</a>
