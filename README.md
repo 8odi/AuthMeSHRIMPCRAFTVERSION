@@ -14,9 +14,7 @@
 prevent stealing usernames<br>
 use it to secure offline and even online mode thats kinda crazy
 authmereloadedshrimpcraft versions executes any players tryna hack ur server<br>
-also it can ban people from specific countires if ur racist but i know mp3 isnt racist so he wont do that
-
-with session login you can make it so ur lazy so u dont enter ur password every login i hope mp3 turns this feature on
+also it can ban people from specific countires
 configuration file exists
 
 if u make a translationf ile pls share it with authme devs not me tho
