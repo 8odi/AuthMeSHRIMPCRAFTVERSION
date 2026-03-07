@@ -18,8 +18,14 @@ import fr.xephi.authme.settings.SpawnLoader;
 import fr.xephi.authme.settings.properties.HooksSettings;
 import fr.xephi.authme.settings.properties.RegistrationSettings;
 import fr.xephi.authme.settings.properties.RestrictionSettings;
+import fr.xephi.authme.shrimp.NewsStore;
+import fr.xephi.authme.shrimp.HelptextStore;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.GameMode;
+import org.bukkit.Sound;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -49,7 +55,12 @@ import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerShearEntityEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.InventoryView;
+import fr.xephi.authme.events.LoginEvent;
+import org.bukkit.configuration.file.YamlConfiguration;
+import java.io.File;
+import java.io.IOException;
 
 import javax.inject.Inject;
 import java.util.Locale;
@@ -91,6 +102,11 @@ public class PlayerListener implements Listener {
     private PermissionsManager permissionsManager;
     @Inject
     private QuickCommandsProtectionManager quickCommandsProtectionManager;
+
+    // Store player state before moving them to lobby
+    private final java.util.Map<java.util.UUID, PreLoginState> preLoginStates = new java.util.concurrent.ConcurrentHashMap<>();
+    private final File stateFile = new File("plugins/AuthMe/playerstates.yml");
+    private final YamlConfiguration stateConfig = YamlConfiguration.loadConfiguration(stateFile);
 
     // Lowest priority to apply fast protection checks
     @EventHandler(priority = EventPriority.LOWEST)
@@ -188,7 +204,47 @@ public class PlayerListener implements Listener {
 
         management.performJoin(player);
 
-        teleportationService.teleportNewPlayerToFirstSpawn(player);
+        teleportationService.teleportNewPlayerToFirstSpawn(player); // i have no idea what these other stuff mean so ill just add my own code and pray it works -poi
+        // Save current state and move to lobby
+        savePreLoginState(player);
+        World lobby = bukkitService.getWorld("lobby");
+        if (lobby != null && lobby.getSpawnLocation() != null) {
+            player.teleport(lobby.getSpawnLocation());
+        }
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL)
+    public void onAuthMeLogin(LoginEvent event) {
+        final Player player = event.getPlayer();
+        PreLoginState state = loadPreLoginState(player.getUniqueId());
+        preLoginStates.remove(player.getUniqueId());
+        if (state != null && state.getLocation() != null) {
+            player.teleport(state.getLocation());
+            if (state.getGameMode() != null) {
+                player.setGameMode(state.getGameMode());
+            } else {
+                player.setGameMode(org.bukkit.GameMode.SURVIVAL);
+            }
+        } else {
+            player.setGameMode(org.bukkit.GameMode.SURVIVAL);
+            World overworld = bukkitService.getWorld("world");
+            if (overworld != null && overworld.getSpawnLocation() != null) {
+                player.teleport(overworld.getSpawnLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
+            }
+        }
+        org.bukkit.plugin.Plugin plugin = org.bukkit.Bukkit.getPluginManager().getPlugin("AuthMe");
+        if (plugin != null) {
+            org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (HelptextStore.hasHelptext()) {
+                    player.sendMessage(ChatColor.AQUA + "[Help] " + ChatColor.WHITE + HelptextStore.text());
+                }
+                if (NewsStore.hasNews()) {
+                    player.sendMessage(ChatColor.GOLD + "[News] " + ChatColor.YELLOW + NewsStore.topic());
+                    player.sendMessage(ChatColor.WHITE + NewsStore.news());
+                    player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_CHIME, 1.0f, 1.0f);
+                }
+            }, 1L);
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGH) // HIGH as EssentialsX listens at HIGHEST
@@ -508,5 +564,51 @@ public class PlayerListener implements Listener {
             && !isInventoryWhitelisted(event.getView())) {
             event.setCancelled(true);
         }
+    }
+
+    private void savePreLoginState(Player player) {
+        Location loc = player.getLocation();
+        if (loc.getWorld() != null && "lobby".equalsIgnoreCase(loc.getWorld().getName())) {
+            return; // don't save lobby positions
+        }
+        preLoginStates.put(player.getUniqueId(), new PreLoginState(loc, player.getGameMode()));
+        String base = "players." + player.getUniqueId();
+        stateConfig.set(base + ".world", loc.getWorld().getName());
+        stateConfig.set(base + ".x", loc.getX());
+        stateConfig.set(base + ".y", loc.getY());
+        stateConfig.set(base + ".z", loc.getZ());
+        stateConfig.set(base + ".yaw", loc.getYaw());
+        stateConfig.set(base + ".pitch", loc.getPitch());
+        stateConfig.set(base + ".gamemode", player.getGameMode().name());
+        try {
+            stateConfig.save(stateFile);
+        } catch (IOException ignored) {
+        }
+    }
+
+    private PreLoginState loadPreLoginState(java.util.UUID uuid) {
+        if (preLoginStates.containsKey(uuid)) {
+            return preLoginStates.get(uuid);
+        }
+        String base = "players." + uuid;
+        String worldName = stateConfig.getString(base + ".world", null);
+        if (worldName == null) {
+            return null;
+        }
+        World world = bukkitService.getWorld(worldName);
+        if (world == null) {
+            return null;
+        }
+        double x = stateConfig.getDouble(base + ".x", world.getSpawnLocation().getX());
+        double y = stateConfig.getDouble(base + ".y", world.getSpawnLocation().getY());
+        double z = stateConfig.getDouble(base + ".z", world.getSpawnLocation().getZ());
+        float yaw = (float) stateConfig.getDouble(base + ".yaw", world.getSpawnLocation().getYaw());
+        float pitch = (float) stateConfig.getDouble(base + ".pitch", world.getSpawnLocation().getPitch());
+        String gm = stateConfig.getString(base + ".gamemode", GameMode.SURVIVAL.name());
+        Location loc = new Location(world, x, y, z, yaw, pitch);
+        GameMode mode = GameMode.valueOf(gm);
+        PreLoginState state = new PreLoginState(loc, mode);
+        preLoginStates.put(uuid, state);
+        return state;
     }
 }

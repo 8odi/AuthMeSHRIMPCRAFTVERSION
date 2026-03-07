@@ -32,9 +32,12 @@ import fr.xephi.authme.settings.properties.SecuritySettings;
 import fr.xephi.authme.task.CleanupTask;
 import fr.xephi.authme.task.purge.PurgeService;
 import fr.xephi.authme.util.ExceptionUtils;
+import org.bukkit.ChatColor;
 import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -42,6 +45,7 @@ import org.bukkit.plugin.java.JavaPluginLoader;
 import org.bukkit.scheduler.BukkitScheduler;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.function.Consumer;
 
 import static fr.xephi.authme.service.BukkitService.TICKS_PER_MINUTE;
@@ -53,7 +57,7 @@ import static fr.xephi.authme.util.Utils.isClassLoaded;
 public class AuthMe extends JavaPlugin {
 
     // Constants
-    private static final String PLUGIN_NAME = "AuthMeReloaded";
+    private static final String PLUGIN_NAME = "authMeSHRIMPCRAFT";
     private static final String LOG_FILENAME = "authme.log";
     private static final int CLEANUP_INTERVAL = 5 * TICKS_PER_MINUTE;
 
@@ -69,6 +73,9 @@ public class AuthMe extends JavaPlugin {
     private Injector injector;
     private BackupService backupService;
     private ConsoleLogger logger;
+    private YamlConfiguration shrimpConfig;
+    private File shrimpConfigFile;
+    private fr.xephi.authme.shrimp.ShrimpBotService shrimpBotService;
 
     /**
      * Constructor.
@@ -170,7 +177,7 @@ public class AuthMe extends JavaPlugin {
         OnStartupTasks.sendMetrics(this, settings);
 
         // Successful message
-        logger.info("AuthMe " + getPluginVersion() + " build n." + getPluginBuildNumber() + " successfully enabled!");
+        logger.info("AuthMe  SHRIMPCRAFT AWESOME EDITION " + getPluginVersion() + " build n." + getPluginBuildNumber() + " successfully enabled WITH MILADY SECURITY");
 
         // Purge on start if enabled
         PurgeService purgeService = injector.getSingleton(PurgeService.class);
@@ -283,6 +290,12 @@ public class AuthMe extends JavaPlugin {
         if (isClassLoaded("org.bukkit.event.entity.EntityAirChangeEvent")) {
             pluginManager.registerEvents(injector.getSingleton(PlayerListener111.class), this);
         }
+
+
+        ensureShrimpConfigLoaded();
+        fr.xephi.authme.shrimp.NewsStore.init(shrimpConfig, shrimpConfigFile, logger);
+        fr.xephi.authme.shrimp.HelptextStore.init(shrimpConfig, shrimpConfigFile, logger);
+        startShrimpService();
     }
 
     /**
@@ -320,6 +333,10 @@ public class AuthMe extends JavaPlugin {
         Consumer<String> infoLogMethod = logger == null ? getLogger()::info : logger::info;
         infoLogMethod.accept("AuthMe " + this.getDescription().getVersion() + " disabled!");
         ConsoleLogger.closeFileWriter();
+
+        if (shrimpBotService != null) {
+            shrimpBotService.shutdown();
+        }
     }
 
     /**
@@ -334,6 +351,16 @@ public class AuthMe extends JavaPlugin {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd,
                              String commandLabel, String[] args) {
+        if ("shrimpbot".equalsIgnoreCase(cmd.getName())) {
+            return handleShrimpBotCommand(sender, args);
+        }
+        if ("contactadmin".equalsIgnoreCase(cmd.getName())) {
+            return handleContactAdminCommand(sender);
+        }
+        if ("done".equalsIgnoreCase(cmd.getName())) {
+            return handleDoneCommand(sender);
+        }
+
         // Make sure the command handler has been initialized
         if (commandHandler == null) {
             getLogger().severe("AuthMe command handler is not available");
@@ -351,5 +378,111 @@ public class AuthMe extends JavaPlugin {
         } catch (Throwable ignore) {
             return "-";
         }
+    }
+
+    private boolean handleShrimpBotCommand(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player) || !sender.isOp()) {
+            sender.sendMessage(ChatColor.RED + "only people with OP can use this command");
+            return true;
+        }
+
+        ensureShrimpConfigLoaded();
+
+        String inviteUrl =
+            "https://discord.com/api/oauth2/authorize?client_id=1479692460782522561&scope=bot%20applications.commands&permissions=8";
+
+        sender.sendMessage(ChatColor.GOLD + "[ShrimpBot] " + ChatColor.AQUA + "Invite link:");
+        sender.sendMessage(ChatColor.GREEN + inviteUrl);
+        String guildId = shrimpConfig.getString("guildId", "");
+        if (!guildId.isEmpty()) {
+            sender.sendMessage(ChatColor.YELLOW + "Current guildId: " + ChatColor.WHITE + guildId);
+        }
+        return true;
+    }
+
+    private boolean handleContactAdminCommand(CommandSender sender) {
+        if (!(sender instanceof Player)) {
+            sender.sendMessage(ChatColor.RED + "Only players can use this.");
+            return true;
+        }
+        Player player = (Player) sender;
+        if (!player.isOp()) {
+            sender.sendMessage(ChatColor.RED + "Only operators can use /contactadmin.");
+            return true;
+        }
+        if (shrimpBotService == null || !shrimpBotService.isActive()) {
+            restartShrimpServiceIfConfigured();
+        }
+        if (shrimpBotService == null || !shrimpBotService.isActive()) {
+            sender.sendMessage(ChatColor.RED + "ShrimpBot is not configured (token/guildId/modRoleId).");
+            return true;
+        }
+        shrimpBotService.startSession(player);
+        return true;
+    }
+
+    private boolean handleDoneCommand(CommandSender sender) {
+        if (!(sender instanceof Player)) {
+            sender.sendMessage(ChatColor.RED + "Only players can use this.");
+            return true;
+        }
+        Player player = (Player) sender;
+        if (shrimpBotService == null || !shrimpBotService.isActive()) {
+            sender.sendMessage(ChatColor.RED + "No active session.");
+            return true;
+        }
+        shrimpBotService.endSessionByPlayer(player.getUniqueId(), true);
+        return true;
+    }
+
+    private void ensureShrimpConfigLoaded() {
+        if (shrimpConfig != null && shrimpConfigFile != null) {
+            return;
+        }
+        shrimpConfigFile = new File(getDataFolder(), "shrimpbot.yml");
+        if (!shrimpConfigFile.exists()) {
+            try {
+                shrimpConfigFile.getParentFile().mkdirs();
+                shrimpConfigFile.createNewFile();
+            } catch (IOException e) {
+                logger.logException("Could not create shrimpbot.yml", e);
+            }
+        }
+        shrimpConfig = YamlConfiguration.loadConfiguration(shrimpConfigFile);
+        if (!shrimpConfig.contains("token")) {
+            shrimpConfig.set("token", "");
+            shrimpConfig.set("guildId", "");
+            shrimpConfig.set("modRoleId", "");
+            saveShrimpConfig();
+        }
+    }
+
+    private void saveShrimpConfig() {
+        if (shrimpConfig == null || shrimpConfigFile == null) {
+            return;
+        }
+        try {
+            shrimpConfig.save(shrimpConfigFile);
+        } catch (IOException e) {
+            logger.logException("Could not save shrimpbot.yml", e);
+        }
+    }
+
+    private void startShrimpService() {
+        shrimpBotService = new fr.xephi.authme.shrimp.ShrimpBotService(this, logger, shrimpConfig);
+        shrimpBotService.start();
+        if (shrimpBotService.isActive()) {
+            getServer().getPluginManager().registerEvents(new fr.xephi.authme.shrimp.ShrimpChatListener(shrimpBotService, logger), this);
+        }
+    }
+
+    private void restartShrimpServiceIfConfigured() {
+        ensureShrimpConfigLoaded();
+        fr.xephi.authme.shrimp.NewsStore.init(shrimpConfig, shrimpConfigFile, logger);
+        fr.xephi.authme.shrimp.HelptextStore.init(shrimpConfig, shrimpConfigFile, logger);
+        if (shrimpBotService != null) {
+            shrimpBotService.shutdown();
+        }
+        startShrimpService();
     }
 }

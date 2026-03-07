@@ -5,47 +5,47 @@
 
 # Registration
 registration:
-  register_request: '&3Please, register to the server with the command: /register <password> <ConfirmPassword>'
+  register_request: '&3Please, register into shrimpcraft by running the command: /register <password> <ConfirmPassword>'
   command_usage: '&cUsage: /register <password> <ConfirmPassword>'
   reg_only: '&4Only registered users can join the server! Please visit http://example.com to register yourself!'
-  kicked_admin_registered: 'An admin just registered you; please log in again.'
-  success: '&2Successfully registered!'
+  kicked_admin_registered: 'An admin just registered you into Shrimpcraft, please log in again.'
+  success: '&2Success!'
   disabled: '&cIn-game registration is disabled!'
-  name_taken: '&cYou already have registered this username!'
+  name_taken: '&cYou have already registered with this username!'
 
 # Password errors on registration
 password:
-  match_error: '&cPasswords didn''t match, check them again!'
-  name_in_password: '&cYou can''t use your name as password, please choose another one...'
-  unsafe_password: '&cThe chosen password isn''t safe, please choose another one...'
-  forbidden_characters: '&4Your password contains illegal characters. Allowed chars: %valid_chars'
-  wrong_length: '&cYour password is too short or too long! Please try with another one!'
+  match_error: '&cPasswords didn''t match'
+  name_in_password: '&cYou can''t you user name as your password... like cmon'
+  unsafe_password: '&cyour password isn''t safe.'
+  forbidden_characters: '&4Your password has illegal characters. Allowed chars: %valid_chars'
+  wrong_length: '&cYour password is either too short or too long'
 
 # Login
 login:
   command_usage: '&cUsage: /login <password>'
-  wrong_password: '&cWrong password!'
-  success: '&2Successful login!'
-  login_request: '&cPlease, login with the command: /login <password>'
+  wrong_password: '&cwrong password'
+  success: '&2Success!'
+  login_request: '&cPlease, login to shrimpcraft with the command: /login <password>'
   timeout_error: '&4Login timeout exceeded, you have been kicked from the server, please try again!'
 
 # Errors
 error:
   unregistered_user: '&cThis user isn''t registered!'
-  denied_command: '&cIn order to use this command you must be authenticated!'
+  denied_command: '&cTo use this command, you have to be authenticated first.'
   denied_chat: '&cIn order to chat you must be authenticated!'
   not_logged_in: '&cYou''re not logged in!'
-  tempban_max_logins: '&cYou have been temporarily banned for failing to log in too many times.'
+  tempban_max_logins: '&cYou have been banned, temporarily, for failing to log in too many times.'
   max_registration: '&cYou have exceeded the maximum number of registrations (%reg_count/%max_acc %reg_names) for your connection!'
   no_permission: '&4You don''t have the permission to perform this action!'
   unexpected_error: '&4An unexpected error occurred, please contact an administrator!'
-  kick_for_vip: '&3A VIP player has joined the server when it was full!'
+  kick_for_vip: '&3a vip player joined while the server was full'
   logged_in: '&cYou''re already logged in!'
   kick_unresolved_hostname: '&cAn error occurred: unresolved player hostname!'
 
 # AntiBot
 antibot:
-  kick_antibot: 'AntiBot protection mode is enabled! You have to wait some minutes before joining the server.'
+  kick_antibot: 'AntiBot Protection was enabled, please wait a few minutes before reconnecting.'
   auto_enabled: '&4[AntiBotService] AntiBot enabled due to the huge number of connections!'
   auto_disabled: '&2[AntiBotService] AntiBot disabled after %m minutes!'
 
@@ -133,7 +133,7 @@ verification:
 
 # Two-factor authentication
 two_factor:
-  code_created: '&2Your secret code is %code. You can scan it from here %url'
+  code_created: '&2In your authenticator app, use the secret code %code. You can also scan the qr code by clicking this link %url'
   confirmation_required: 'Please confirm your code with /2fa confirm <code>'
   code_required: 'Please submit your two-factor authentication code with /2fa code <code>'
   already_enabled: 'Two-factor authentication is already enabled for your account!'

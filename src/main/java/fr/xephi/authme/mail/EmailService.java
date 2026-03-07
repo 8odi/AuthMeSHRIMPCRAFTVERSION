@@ -17,7 +17,11 @@ import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import com.google.common.io.Files;
 /**
  * Creates emails and sends them.
  */
@@ -105,7 +109,15 @@ public class EmailService {
 
         String mailText = replaceTagsForVerificationEmail(settings.getVerificationEmailMessage(), name, code,
             settings.getProperty(SecuritySettings.VERIFICATION_CODE_EXPIRATION_MINUTES));
-        return sendMailSsl.sendEmail(mailText, email);
+        mailText = embedVerificationImage(mailText, email);
+
+        String mailTextPlain = loadVerificationPlainText();
+        if (!mailTextPlain.isEmpty()) {
+            mailTextPlain = replaceTagsForVerificationEmail(mailTextPlain, name, code,
+                settings.getProperty(SecuritySettings.VERIFICATION_CODE_EXPIRATION_MINUTES));
+        }
+
+        return sendMailSsl.sendEmail(mailText, mailTextPlain.isEmpty() ? mailText : mailTextPlain, email);
     }
 
     /**
@@ -125,9 +137,17 @@ public class EmailService {
             return false;
         }
 
-        String message = replaceTagsForRecoveryCodeMail(settings.getRecoveryCodeEmailMessage(),
+        String mailText = replaceTagsForRecoveryCodeMail(settings.getRecoveryCodeEmailMessage(),
             name, code, settings.getProperty(SecuritySettings.RECOVERY_CODE_HOURS_VALID));
-        return sendMailSsl.sendEmail(message, htmlEmail);
+        mailText = embedRecoveryImage(mailText, htmlEmail);
+
+        String mailTextPlain = loadRecoveryPlainText();
+        if (!mailTextPlain.isEmpty()) {
+            mailTextPlain = replaceTagsForRecoveryCodeMail(mailTextPlain, name, code,
+                settings.getProperty(SecuritySettings.RECOVERY_CODE_HOURS_VALID));
+        }
+
+        return sendMailSsl.sendEmail(mailText, mailTextPlain.isEmpty() ? mailText : mailTextPlain, htmlEmail);
     }
 
     private File generatePasswordImage(String name, String newPass) throws IOException {
@@ -135,6 +155,78 @@ public class EmailService {
         File file = new File(dataFolder, name + "_new_pass.jpg");
         ImageIO.write(gen.generateImage(), "jpg", file);
         return file;
+    }
+
+    private String embedVerificationImage(String mailText, HtmlEmail email) {
+        File imageFile = new File(new File(dataFolder, "verification code email"),
+            "images/8f4bcb2edd0c0bfcc163493e4f73abe3.jpg");
+
+        FileUtils.copyFileFromResource(imageFile,
+            "verification code email/images/8f4bcb2edd0c0bfcc163493e4f73abe3.jpg");
+
+        if (!imageFile.exists()) {
+            return mailText;
+        }
+
+        try {
+            String tag = email.embed(new FileDataSource(imageFile), imageFile.getName());
+            return mailText.replace("images/8f4bcb2edd0c0bfcc163493e4f73abe3.jpg", "cid:" + tag);
+        } catch (EmailException e) {
+            logger.logException("Unable to embed verification email image:", e);
+            return mailText;
+        }
+    }
+
+    private String loadVerificationPlainText() {
+        File txtFile = new File(new File(dataFolder, "verification code email"), "email.txt");
+        FileUtils.copyFileFromResource(txtFile, "verification code email/email.txt");
+
+        if (!txtFile.exists()) {
+            return "";
+        }
+
+        try {
+            return Files.asCharSource(txtFile, StandardCharsets.UTF_8).read();
+        } catch (IOException e) {
+            logger.logException("Failed to read verification plain text email:", e);
+            return "";
+        }
+    }
+
+    private String embedRecoveryImage(String mailText, HtmlEmail email) {
+        File imageFile = new File(new File(dataFolder, "recovery code email"),
+            "images/8f4bcb2edd0c0bfcc163493e4f73abe3.jpg");
+
+        FileUtils.copyFileFromResource(imageFile,
+            "recovery code email/images/8f4bcb2edd0c0bfcc163493e4f73abe3.jpg");
+
+        if (!imageFile.exists()) {
+            return mailText;
+        }
+
+        try {
+            String tag = email.embed(new FileDataSource(imageFile), imageFile.getName());
+            return mailText.replace("images/8f4bcb2edd0c0bfcc163493e4f73abe3.jpg", "cid:" + tag);
+        } catch (EmailException e) {
+            logger.logException("Unable to embed recovery email image:", e);
+            return mailText;
+        }
+    }
+
+    private String loadRecoveryPlainText() {
+        File txtFile = new File(new File(dataFolder, "recovery code email"), "email.txt");
+        FileUtils.copyFileFromResource(txtFile, "recovery code email/email.txt");
+
+        if (!txtFile.exists()) {
+            return "";
+        }
+
+        try {
+            return Files.asCharSource(txtFile, StandardCharsets.UTF_8).read();
+        } catch (IOException e) {
+            logger.logException("Failed to read recovery plain text email:", e);
+            return "";
+        }
     }
 
     private static String embedImageIntoEmailContent(File image, HtmlEmail email, String content)
@@ -160,10 +252,17 @@ public class EmailService {
     }
 
     private String replaceTagsForRecoveryCodeMail(String mailText, String name, String code, int hoursValid) {
-        return mailText
-            .replace("<playername />", name)
-            .replace("<servername />", settings.getProperty(PluginSettings.SERVER_NAME))
-            .replace("<recoverycode />", code)
-            .replace("<hoursvalid />", String.valueOf(hoursValid));
+        if (mailText == null) {
+            return "";
+        }
+        return replacePlaceholder(mailText, "playername", name)
+            .replaceAll("(?i)<\\s*servername\\s*/?>", Matcher.quoteReplacement(settings.getProperty(PluginSettings.SERVER_NAME)))
+            .replaceAll("(?i)<\\s*recoverycode\\s*/?>", Matcher.quoteReplacement(code))
+            .replaceAll("(?i)<\\s*hoursvalid\\s*/?>", Matcher.quoteReplacement(String.valueOf(hoursValid)));
+    }
+
+    private String replacePlaceholder(String text, String key, String value) {
+        String pattern = "(?i)<\\s*" + Pattern.quote(key) + "\\s*/?>";
+        return text.replaceAll(pattern, Matcher.quoteReplacement(value));
     }
 }

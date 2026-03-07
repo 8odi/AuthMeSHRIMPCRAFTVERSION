@@ -1,0 +1,12 @@
+<playername />
+your temporary code for ShrimpCraft
+If you did NOT sign into shrimpcrafdt but ur still seeing this email.......
+IGNORE!!!!!!!!!!!!!
+
+do NOT share this code with ANYBODY!!!!!!
+
+<generatedcode />
+
+to sign into shrimpcraft run the command
+/verification <generatedcode />
+shrimpcraft 2026

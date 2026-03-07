@@ -76,9 +76,18 @@ commands:
   captcha:
     description: Captcha command
     usage: /captcha <captcha>
+  shrimpbot:
+    description: Sends the Discord bot invite link to operators
+    usage: /shrimpbot [setguild <guildId>]
   verification:
     description: Verification command
     usage: /verification <code>
+  contactadmin:
+    description: Open a private Discord session channel with staff
+    usage: /contactadmin
+  done:
+    description: Close your current contact session
+    usage: /done
 permissions:
   authme.admin.*:
     description: Gives access to all admin commands

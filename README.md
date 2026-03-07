@@ -3,11 +3,11 @@
 
 <img src="wallpaper.png?raw=true" alt="AuthMeLogo"/>
 
-| Type              | Badges                                                                                                                                                                                                                                                                                                                                                                                |
-|-------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Code quality:** | S++ the best [![Coverage status]100% better than any other plugin                                                 |
-| **Jenkins CI:**   | what [![Build Status]super stable amazing better cool ![Build Tests]none |
-| **Other CIs:**    | [![Build Status]100% working and aslo its shrimpcraft themed                                                                                                                                                                                                                                                             |
+| Type              | Badges                                                                                                                                                                                                                                                                                                                                                                              |
+|-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Code quality:** | S++ the best                                             |
+| **Jenkins CI:**   | what |
+| **Other CIs:**    | 100% working and aslo its shrimpcraft themed                                                                                                                                                                                                                                                           |
 
 ## Description
 
@@ -18,6 +18,16 @@ also it can ban people from specific countires
 configuration file exists
 
 if u make a translationf ile pls share it with authme devs not me tho
+
+## FEATURES THAT I ADDED
+
+### I added shrimpbot
+
+#### shrimpbot makes it so ingame you could do /contactadmin which connects u with an admin
+
+### I added news and helptext
+
+### teleports you to a server lobby
 
 #### Features:
 <ul>

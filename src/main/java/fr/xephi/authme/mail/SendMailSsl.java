@@ -85,6 +85,18 @@ public class SendMailSsl {
      * @return true upon success, false otherwise
      */
     public boolean sendEmail(String content, HtmlEmail email) {
+        return sendEmail(content, content, email);
+    }
+
+    /**
+     * Sets the given HTML and text contents to the HtmlEmail object and sends it.
+     *
+     * @param htmlContent the HTML body
+     * @param textContent the plain text body
+     * @param email the email object to send
+     * @return true upon success, false otherwise
+     */
+    public boolean sendEmail(String htmlContent, String textContent, HtmlEmail email) {
         Thread.currentThread().setContextClassLoader(SendMailSsl.class.getClassLoader());
         // Issue #999: Prevent UnsupportedDataTypeException: no object DCH for MIME type multipart/alternative
         // cf. http://stackoverflow.com/questions/21856211/unsupporteddatatypeexception-no-object-dch-for-mime-type
@@ -96,8 +108,8 @@ public class SendMailSsl {
         mc.addMailcap("message/rfc822;; x-java-content- handler=com.sun.mail.handlers.message_rfc822");
 
         try {
-            email.setHtmlMsg(content);
-            email.setTextMsg(content);
+            email.setHtmlMsg(htmlContent);
+            email.setTextMsg(textContent);
         } catch (EmailException e) {
             logger.logException("Your email.html config contains an error and cannot be sent:", e);
             return false;

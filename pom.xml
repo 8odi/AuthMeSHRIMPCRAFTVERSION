@@ -67,7 +67,7 @@
         <maven.minimumVersion>3.8.8</maven.minimumVersion>
 
         <!-- Versioning properties -->
-        <project.outputName>AuthMe</project.outputName>
+        <project.outputName>authMeSHRIMPCRAFT</project.outputName>
         <project.buildNumber>CUSTOM</project.buildNumber>
         <project.versionCode>${project.version}-b${project.buildNumber}</project.versionCode>
         <project.finalNameBase>${project.outputName}-${project.version}</project.finalNameBase>
@@ -75,7 +75,7 @@
         <!-- Plugin description file properties -->
         <pluginDescription.name>${project.outputName}</pluginDescription.name>
         <pluginDescription.version>${project.versionCode}</pluginDescription.version>
-        <pluginDescription.main>${project.groupId}.${project.artifactId}.${pluginDescription.name}</pluginDescription.main>
+        <pluginDescription.main>${project.groupId}.${project.artifactId}.AuthMe</pluginDescription.main>
         <pluginDescription.authors>sgdc3, games647, Hex3l, krusic22</pluginDescription.authors>
 
         <!-- Java libraries -->
@@ -320,21 +320,24 @@
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.6.0</version>
                 <executions>
-                    <!-- Disable, we aren't using shading atm
                     <execution>
                         <id>shaded-jar</id>
                         <phase>package</phase>
                         <goals>
                             <goal>shade</goal>
                         </goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <!-- Overwrite main artifact (no classifier) so the server loads shaded jar -->
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <finalName>${project.finalNameBase}</finalName>
+                        </configuration>
                     </execution>
-                    -->
                 </executions>
                 <configuration>
-                    <!-- Don't create the reduced pom file, as we don't deploy the shaded jar -->
+                    <!-- Don't create the reduced pom file, overwrite main artifact with shaded jar -->
                     <createDependencyReducedPom>false</createDependencyReducedPom>
-                    <!-- Deploy the non shaded jar as main artifact -->
-                    <shadedArtifactAttached>true</shadedArtifactAttached>
+                    <shadedArtifactAttached>false</shadedArtifactAttached>
                     <!-- Use the base jar name, to help server owners download the right jar -->
                     <finalName>${project.finalNameBase}</finalName>
 
@@ -560,6 +563,28 @@
                     <artifactId>slf4j-api</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <!-- Discord bridge -->
+        <dependency>
+            <groupId>net.dv8tion</groupId>
+            <artifactId>JDA</artifactId>
+            <version>5.0.0-beta.24</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>club.minnced</groupId>
+                    <artifactId>opus-java</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>club.minnced</groupId>
+            <artifactId>discord-webhooks</artifactId>
+            <version>0.8.4</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

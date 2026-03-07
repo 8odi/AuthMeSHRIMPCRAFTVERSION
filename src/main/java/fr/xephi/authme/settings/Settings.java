@@ -69,8 +69,8 @@ public class Settings extends SettingsManagerImpl {
 
     private void loadSettingsFromFiles() {
         passwordEmailMessage = readFile("email.html");
-        verificationEmailMessage = readFile("verification_code_email.html");
-        recoveryCodeEmailMessage = readFile("recovery_code_email.html");
+        verificationEmailMessage = readFile("verification code email/email.html");
+        recoveryCodeEmailMessage = readFile("recovery code email/email.html");
     }
 
     @Override

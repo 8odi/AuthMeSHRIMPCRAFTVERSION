@@ -1,0 +1,14 @@
+<playername />
+your recovery code for ShrimpCraft
+If you did NOT request to reset your password but ur still seeing this email.......
+IGNORE!!!!!!!!!!!!!
+
+do NOT share this code with ANYBODY!!!!!!
+
+your code is..............
+<recoverycode />
+
+now run the command
+/email code <recoverycode />
+
+shrimpcraft 2026
