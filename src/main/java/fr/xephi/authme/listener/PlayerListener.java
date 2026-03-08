@@ -20,6 +20,7 @@ import fr.xephi.authme.settings.properties.RegistrationSettings;
 import fr.xephi.authme.settings.properties.RestrictionSettings;
 import fr.xephi.authme.shrimp.NewsStore;
 import fr.xephi.authme.shrimp.HelptextStore;
+import fr.xephi.authme.security.poiadded.ControlStuff;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -40,6 +41,8 @@ import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerEditBookEvent;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
@@ -163,6 +166,10 @@ public class PlayerListener implements Listener {
             onJoinVerifier.checkNameCasing(name, auth);
             final String ip = event.getAddress().getHostAddress();
             onJoinVerifier.checkPlayerCountry(name, ip, isAuthAvailable);
+            if (ControlStuff.isLockdown()) {
+                event.setKickMessage(ChatColor.RED + "Server is in lockdown.");
+                event.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_OTHER);
+            }
         } catch (FailedVerificationException e) {
             event.setKickMessage(messages.retrieveSingle(name, e.getReason(), e.getArgs()));
             event.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_OTHER);
@@ -190,6 +197,10 @@ public class PlayerListener implements Listener {
         }
 
         onJoinVerifier.refusePlayerForFullServer(event);
+        if (ControlStuff.isLockdown()) {
+            event.setKickMessage(ChatColor.RED + "Server is in lockdown.");
+            event.setResult(PlayerLoginEvent.Result.KICK_OTHER);
+        }
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
@@ -440,21 +451,21 @@ public class PlayerListener implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if (listenerService.shouldCancelEvent(event)) {
+        if (isFrozen(event.getPlayer()) || listenerService.shouldCancelEvent(event)) {
             event.setCancelled(true);
         }
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
-        if (listenerService.shouldCancelEvent(event)) {
+        if (isFrozen(event.getPlayer()) || listenerService.shouldCancelEvent(event)) {
             event.setCancelled(true);
         }
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onPlayerInteractAtEntity(PlayerInteractAtEntityEvent event) {
-        if (listenerService.shouldCancelEvent(event)) {
+        if (isFrozen(event.getPlayer()) || listenerService.shouldCancelEvent(event)) {
             event.setCancelled(true);
         }
     }
@@ -508,14 +519,14 @@ public class PlayerListener implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onPlayerPickupItem(PlayerPickupItemEvent event) {
-        if (listenerService.shouldCancelEvent(event)) {
+        if (isFrozen(event.getPlayer()) || listenerService.shouldCancelEvent(event)) {
             event.setCancelled(true);
         }
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onPlayerDropItem(PlayerDropItemEvent event) {
-        if (listenerService.shouldCancelEvent(event)) {
+        if (isFrozen((Player) event.getPlayer()) || listenerService.shouldCancelEvent(event)) {
             event.setCancelled(true);
         }
     }
@@ -534,12 +545,35 @@ public class PlayerListener implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onPlayerMoveFreeze(PlayerMoveEvent event) {
+        if (isFrozen(event.getPlayer())) {
+            if (event.getFrom().getX() != event.getTo().getX()
+                || event.getFrom().getY() != event.getTo().getY()
+                || event.getFrom().getZ() != event.getTo().getZ()) {
+                event.setTo(event.getFrom());
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onChatMute(AsyncPlayerChatEvent event) {
+        if (ControlStuff.isMuteAll() || isFrozen(event.getPlayer())) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage(ChatColor.RED + "Chat is muted by staff.");
+        }
+    }
+
     private boolean isInventoryWhitelisted(InventoryView inventory) {
         if (inventory == null) {
             return false;
         }
         Set<String> whitelist = settings.getProperty(RestrictionSettings.UNRESTRICTED_INVENTORIES);
         return whitelist.contains(ChatColor.stripColor(inventory.getTitle()).toLowerCase(Locale.ROOT));
+    }
+
+    private boolean isFrozen(Player player) {
+        return ControlStuff.isFrozen(player.getUniqueId());
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
@@ -560,8 +594,22 @@ public class PlayerListener implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onPlayerInventoryClick(InventoryClickEvent event) {
-        if (listenerService.shouldCancelEvent(event.getWhoClicked())
+        if (isFrozen((Player) event.getWhoClicked()) || listenerService.shouldCancelEvent(event.getWhoClicked())
             && !isInventoryWhitelisted(event.getView())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+    public void onBlockBreak(BlockBreakEvent event) {
+        if (isFrozen(event.getPlayer()) || listenerService.shouldCancelEvent(event.getPlayer())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+    public void onBlockPlace(BlockPlaceEvent event) {
+        if (isFrozen(event.getPlayer()) || listenerService.shouldCancelEvent(event.getPlayer())) {
             event.setCancelled(true);
         }
     }

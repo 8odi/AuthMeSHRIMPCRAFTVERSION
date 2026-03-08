@@ -29,6 +29,8 @@ if u make a translationf ile pls share it with authme devs not me tho
 
 ### teleports you to a server lobby
 
+#### /lockdown /kickall /muteall /freeze <player> /unfreeze <player> accessible through both console and discord
+
 #### Features:
 <ul>
   <li><strong>E-Mail Recovery System!</strong></li>

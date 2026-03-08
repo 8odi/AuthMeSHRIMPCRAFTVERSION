@@ -88,6 +88,21 @@ commands:
   done:
     description: Close your current contact session
     usage: /done
+  lockdown:
+    description: Toggle lockdown
+    usage: /lockdown <on|off>
+  muteall:
+    description: Toggle mute all
+    usage: /muteall <on|off>
+  kickall:
+    description: Kick everyone
+    usage: /kickall
+  freeze:
+    description: Freeze someone or everyobody
+    usage: /freeze <player|@a>
+  unfreeze:
+    description: Unfreeze someone or everybody
+    usage: /unfreeze <player|@a>
 permissions:
   authme.admin.*:
     description: Gives access to all admin commands

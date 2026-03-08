@@ -29,9 +29,11 @@ import fr.xephi.authme.service.yaml.YamlParseException;
 import fr.xephi.authme.settings.Settings;
 import fr.xephi.authme.settings.SettingsWarner;
 import fr.xephi.authme.settings.properties.SecuritySettings;
+import fr.xephi.authme.security.poiadded.ControlStuff;
 import fr.xephi.authme.task.CleanupTask;
 import fr.xephi.authme.task.purge.PurgeService;
 import fr.xephi.authme.util.ExceptionUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Server;
 import org.bukkit.command.Command;
@@ -46,6 +48,7 @@ import org.bukkit.scheduler.BukkitScheduler;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
 import java.util.function.Consumer;
 
 import static fr.xephi.authme.service.BukkitService.TICKS_PER_MINUTE;
@@ -360,6 +363,21 @@ public class AuthMe extends JavaPlugin {
         if ("done".equalsIgnoreCase(cmd.getName())) {
             return handleDoneCommand(sender);
         }
+        if ("lockdown".equalsIgnoreCase(cmd.getName())) {
+            return handleLockdownCommand(sender, args);
+        }
+        if ("muteall".equalsIgnoreCase(cmd.getName())) {
+            return handleMuteAllCommand(sender, args);
+        }
+        if ("kickall".equalsIgnoreCase(cmd.getName())) {
+            return handleKickAllCommand(sender);
+        }
+        if ("freeze".equalsIgnoreCase(cmd.getName())) {
+            return handleFreezeCommand(sender, args, true);
+        }
+        if ("unfreeze".equalsIgnoreCase(cmd.getName())) {
+            return handleFreezeCommand(sender, args, false);
+        }
 
         // Make sure the command handler has been initialized
         if (commandHandler == null) {
@@ -432,6 +450,113 @@ public class AuthMe extends JavaPlugin {
             return true;
         }
         shrimpBotService.endSessionByPlayer(player.getUniqueId(), true);
+        return true;
+    }
+
+    private boolean requireConsole(CommandSender sender) {
+        if (sender instanceof Player) {
+            sender.sendMessage(ChatColor.RED + "This command can only be run from console.");
+            return false;
+        }
+        return true;
+    }
+
+    private boolean handleLockdownCommand(CommandSender sender, String[] args) {
+        if (!requireConsole(sender)) {
+            return true;
+        }
+        if (args.length == 0) {
+            sender.sendMessage(ChatColor.YELLOW + "Usage: /lockdown <on|off|status>");
+            return true;
+        }
+        String mode = args[0].toLowerCase(Locale.ROOT);
+        switch (mode) {
+            case "on":
+                ControlStuff.setLockdown(true);
+                sender.sendMessage(ChatColor.RED + "Lockdown enabled. New joins blocked.");
+                return true;
+            case "off":
+                ControlStuff.setLockdown(false);
+                sender.sendMessage(ChatColor.GREEN + "Lockdown disabled.");
+                return true;
+            case "status":
+                sender.sendMessage(ChatColor.YELLOW + "Lockdown: " + (ControlStuff.isLockdown() ? "ON" : "OFF"));
+                return true;
+            default:
+                sender.sendMessage(ChatColor.YELLOW + "Usage: /lockdown <on|off|status>");
+                return true;
+        }
+    }
+
+    private boolean handleMuteAllCommand(CommandSender sender, String[] args) {
+        if (!requireConsole(sender)) {
+            return true;
+        }
+        if (args.length == 0) {
+            sender.sendMessage(ChatColor.YELLOW + "Usage: /muteall <on|off|status>");
+            return true;
+        }
+        String mode = args[0].toLowerCase(Locale.ROOT);
+        switch (mode) {
+            case "on":
+                ControlStuff.setMuteAll(true);
+                sender.sendMessage(ChatColor.RED + "MuteAll enabled. Chat blocked.");
+                return true;
+            case "off":
+                ControlStuff.setMuteAll(false);
+                sender.sendMessage(ChatColor.GREEN + "MuteAll disabled.");
+                return true;
+            case "status":
+                sender.sendMessage(ChatColor.YELLOW + "MuteAll: " + (ControlStuff.isMuteAll() ? "ON" : "OFF"));
+                return true;
+            default:
+                sender.sendMessage(ChatColor.YELLOW + "Usage: /muteall <on|off|status>");
+                return true;
+        }
+    }
+
+    private boolean handleKickAllCommand(CommandSender sender) {
+        if (!requireConsole(sender)) {
+            return true;
+        }
+        Bukkit.getOnlinePlayers().forEach(p -> p.kickPlayer(ChatColor.RED + "Kicked by console."));
+        sender.sendMessage(ChatColor.YELLOW + "All players kicked.");
+        return true;
+    }
+
+    private boolean handleFreezeCommand(CommandSender sender, String[] args, boolean freeze) {
+        if (!requireConsole(sender)) {
+            return true;
+        }
+        if (args.length == 0) {
+            sender.sendMessage(ChatColor.YELLOW + "Usage: /" + (freeze ? "freeze" : "unfreeze") + " <player|@a>");
+            return true;
+        }
+        String target = args[0];
+        if ("@a".equalsIgnoreCase(target)) {
+            if (freeze) {
+                ControlStuff.freezeAll();
+                sender.sendMessage(ChatColor.RED + "All players frozen.");
+            } else {
+                ControlStuff.unfreezeAll();
+                sender.sendMessage(ChatColor.GREEN + "All players unfrozen.");
+            }
+            return true;
+        }
+        Player player = Bukkit.getPlayerExact(target);
+        if (player == null) {
+            sender.sendMessage(ChatColor.RED + "Player not found: " + target);
+            return true;
+        }
+        if (freeze) {
+            ControlStuff.freeze(player.getUniqueId());
+            player.sendMessage(ChatColor.RED + "You have been frozen.");
+            sender.sendMessage(ChatColor.YELLOW + "Frozen " + player.getName());
+        } else {
+            ControlStuff.unfreeze(player.getUniqueId());
+            player.sendMessage(ChatColor.GREEN + "You have been unfrozen.");
+            sender.sendMessage(ChatColor.YELLOW + "Unfrozen " + player.getName());
+        }
         return true;
     }
 

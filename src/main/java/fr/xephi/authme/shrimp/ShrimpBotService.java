@@ -3,6 +3,7 @@ package fr.xephi.authme.shrimp;
 import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import fr.xephi.authme.ConsoleLogger;
+import fr.xephi.authme.security.poiadded.ControlStuff;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.Permission;
@@ -78,7 +79,20 @@ public class ShrimpBotService {
                     new OptionData(OptionType.STRING, "thenews", "the news", true)
                 ),
                 Commands.slash("helptext", "Shrimpcraft help text")
-                    .addOptions(new OptionData(OptionType.STRING, "text", "help text to show", true))
+                    .addOptions(new OptionData(OptionType.STRING, "text", "help text to show", true)),
+                Commands.slash("lockdown", "Toggle lockdown").addOptions(
+                    new OptionData(OptionType.BOOLEAN, "enable", "true to enable, false to disable", true)
+                ),
+                Commands.slash("muteall", "Toggle mute-all").addOptions(
+                    new OptionData(OptionType.BOOLEAN, "enable", "true to enable, false to disable", true)
+                ),
+                Commands.slash("kickall", "Kick everyone"),
+                Commands.slash("freeze", "Freeze a player or everyone").addOptions(
+                    new OptionData(OptionType.STRING, "target", "player name or @a", true)
+                ),
+                Commands.slash("unfreeze", "Unfreeze a player or everyone").addOptions(
+                    new OptionData(OptionType.STRING, "target", "player name or @a", true)
+                )
             ).queue();
             active = true;
             logger.info("[ShrimpBot] Connected and ready (:");
@@ -229,8 +243,52 @@ public class ShrimpBotService {
             } else if ("helptext".equalsIgnoreCase(name)) {
                 String text = event.getOption("text") != null ? event.getOption("text").getAsString() : "";
                 fr.xephi.authme.shrimp.handlers.HelptextHandler.handleSlashHelptext(event, text);
+            } else if ("lockdown".equalsIgnoreCase(name)) {
+                boolean enable = event.getOption("enable").getAsBoolean();
+                ControlStuff.setLockdown(enable);
+                event.reply("Lockdown " + (enable ? "enabled" : "disabled")).setEphemeral(true).queue();
+            } else if ("muteall".equalsIgnoreCase(name)) {
+                boolean enable = event.getOption("enable").getAsBoolean();
+                ControlStuff.setMuteAll(enable);
+                event.reply("MuteAll " + (enable ? "enabled" : "disabled")).setEphemeral(true).queue();
+            } else if ("kickall".equalsIgnoreCase(name)) {
+                Bukkit.getScheduler().runTask(plugin, () -> Bukkit.getOnlinePlayers()
+                    .forEach(p -> p.kickPlayer(org.bukkit.ChatColor.RED + "Kicked by staff.")));
+                event.reply("Everyone kicked.").setEphemeral(true).queue();
+            } else if ("freeze".equalsIgnoreCase(name)) {
+                String target = event.getOption("target").getAsString();
+                handleFreezeCommand(target, true);
+                event.reply("Freeze applied to " + target).setEphemeral(true).queue();
+            } else if ("unfreeze".equalsIgnoreCase(name)) {
+                String target = event.getOption("target").getAsString();
+                handleFreezeCommand(target, false);
+                event.reply("Unfreeze applied to " + target).setEphemeral(true).queue();
             }
         }
+    }
+
+    private void handleFreezeCommand(String target, boolean freeze) {
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if ("@a".equalsIgnoreCase(target)) {
+                if (freeze) {
+                    ControlStuff.freezeAll();
+                } else {
+                    ControlStuff.unfreezeAll();
+                }
+                return;
+            }
+            Player p = Bukkit.getPlayerExact(target);
+            if (p == null) {
+                return;
+            }
+            if (freeze) {
+                ControlStuff.freeze(p.getUniqueId());
+                p.sendMessage(org.bukkit.ChatColor.RED + "You have been frozen.");
+            } else {
+                ControlStuff.unfreeze(p.getUniqueId());
+                p.sendMessage(org.bukkit.ChatColor.GREEN + "You have been unfrozen.");
+            }
+        });
     }
 
     private boolean hasModRole(Member member) {
