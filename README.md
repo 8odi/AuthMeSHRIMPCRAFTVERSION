@@ -31,6 +31,8 @@ if u make a translationf ile pls share it with authme devs not me tho
 
 #### /lockdown /kickall /muteall /freeze <player> /unfreeze <player> accessible through both console and discord
 
+#### the above commands can also be accessed in minercraft if they are trusted (someone gets trusted if mp3 in console or in discord runs /trust <player>)
+
 #### Features:
 <ul>
   <li><strong>E-Mail Recovery System!</strong></li>
@@ -131,7 +133,7 @@ if u make a translationf ile pls share it with authme devs not me tho
 
 ##### How to compile the project:
 >- Clone the project with Git/GitHub
->- Execute command "mvn clean package"
+>- Execute command "mvn clean package -DskipTests"
 
 ##### Running requirements:
 >- Java 17+
@@ -140,7 +142,7 @@ if u make a translationf ile pls share it with authme devs not me tho
 
 ## Credits
 
-#### the guy who did all the work
+#### the guy who forked authme and added the cool stuff
 ### thepoiedit
 
 ##### Contributors:

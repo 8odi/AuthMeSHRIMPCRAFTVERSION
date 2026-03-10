@@ -30,6 +30,8 @@ import fr.xephi.authme.settings.Settings;
 import fr.xephi.authme.settings.SettingsWarner;
 import fr.xephi.authme.settings.properties.SecuritySettings;
 import fr.xephi.authme.security.poiadded.ControlStuff;
+import fr.xephi.authme.security.poiadded.Trust;
+import fr.xephi.authme.security.poiadded.TrustedPlayers;
 import fr.xephi.authme.task.CleanupTask;
 import fr.xephi.authme.task.purge.PurgeService;
 import fr.xephi.authme.util.ExceptionUtils;
@@ -210,6 +212,8 @@ public class AuthMe extends JavaPlugin {
         // Create plugin folder
         getDataFolder().mkdir();
 
+        TrustedPlayers.init(getDataFolder());
+
         // Create injector, provide elements from the Bukkit environment and register providers
         injector = new InjectorBuilder()
             .addDefaultHandlers("fr.xephi.authme")
@@ -332,6 +336,8 @@ public class AuthMe extends JavaPlugin {
         // Wait for tasks and close data source
         new TaskCloser(this, database).run();
 
+        TrustedPlayers.save();
+
         // Disabled correctly
         Consumer<String> infoLogMethod = logger == null ? getLogger()::info : logger::info;
         infoLogMethod.accept("AuthMe " + this.getDescription().getVersion() + " disabled!");
@@ -377,6 +383,9 @@ public class AuthMe extends JavaPlugin {
         }
         if ("unfreeze".equalsIgnoreCase(cmd.getName())) {
             return handleFreezeCommand(sender, args, false);
+        }
+        if ("trust".equalsIgnoreCase(cmd.getName())) {
+            return handleTrustCommand(sender, args);
         }
 
         // Make sure the command handler has been initialized
@@ -455,10 +464,18 @@ public class AuthMe extends JavaPlugin {
 
     private boolean requireConsole(CommandSender sender) {
         if (sender instanceof Player) {
-            sender.sendMessage(ChatColor.RED + "This command can only be run from console.");
+            Player player = (Player) sender;
+            if (TrustedPlayers.isTrusted(player.getUniqueId())) {
+                return true;
+            }
+            sender.sendMessage(ChatColor.RED + "This command can only be run from console or by a trusted player.");
             return false;
         }
         return true;
+    }
+
+    private boolean handleTrustCommand(CommandSender sender, String[] args) {
+        return Trust.handle(sender, args);
     }
 
     private boolean handleLockdownCommand(CommandSender sender, String[] args) {

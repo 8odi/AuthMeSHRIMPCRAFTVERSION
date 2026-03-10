@@ -103,6 +103,9 @@ commands:
   unfreeze:
     description: Unfreeze someone or everybody
     usage: /unfreeze <player|@a>
+  trust:
+    description: Toggle trust for a player to run console-only security commands in-game
+    usage: /trust <player>
 permissions:
   authme.admin.*:
     description: Gives access to all admin commands
