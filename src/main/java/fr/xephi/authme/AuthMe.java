@@ -433,10 +433,6 @@ public class AuthMe extends JavaPlugin {
             return true;
         }
         Player player = (Player) sender;
-        if (!player.isOp()) {
-            sender.sendMessage(ChatColor.RED + "Only operators can use /contactadmin.");
-            return true;
-        }
         if (shrimpBotService == null || !shrimpBotService.isActive()) {
             restartShrimpServiceIfConfigured();
         }
